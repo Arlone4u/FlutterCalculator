@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:simple_calculator/calculator_button.dart';
 import 'package:simple_calculator/palette.dart';
+import 'package:math_expressions/math_expressions.dart';
 
 void main() {
   runApp(CalculatorApp());
@@ -14,73 +15,49 @@ class CalculatorApp extends StatefulWidget {
 }
 
 class _CalculatorAppState extends State<CalculatorApp> {
-  late int firstNumber;
-  late int secondNumber;
-  String history = '';
-  String textToDisplay = '';
-  late String res;
-  late String operation;
+  String equation = "0";
+  String result = "0";
+  String expression = "";
 
   void btnOnClick(String btnVal) {
     print(btnVal);
-    if (btnVal == 'C') {
-      textToDisplay = '';
-      firstNumber = 0;
-      secondNumber = 0;
-      res = '';
-    } else if (btnVal == 'AC') {
-      textToDisplay = '';
-      firstNumber = 0;
-      secondNumber = 0;
-      res = '';
-      history = '';
-    } else if (btnVal == '+/-') {
-      if (textToDisplay[0] != '-') {
-        res = '-' + textToDisplay;
-      } else {
-        res = textToDisplay.substring(1);
-      }
-    } else if (btnVal == '<') {
-      res = textToDisplay.substring(0, textToDisplay.length - 1);
-    } else if (btnVal == '+' ||
-        btnVal == '-' ||
-        btnVal == 'X' ||
-        btnVal == '/') {
-      firstNumber = int.parse(textToDisplay);
-      res = '';
-      operation = btnVal;
-    } else if (btnVal == '=') {
-      secondNumber = int.parse(textToDisplay);
-      if (operation == '+') {
-        res = (firstNumber + secondNumber).toString();
-        history = firstNumber.toString() +
-            operation.toString() +
-            secondNumber.toString();
-      }
-      if (operation == '-') {
-        res = (firstNumber - secondNumber).toString();
-        history = firstNumber.toString() +
-            operation.toString() +
-            secondNumber.toString();
-      }
-      if (operation == 'X') {
-        res = (firstNumber * secondNumber).toString();
-        history = firstNumber.toString() +
-            operation.toString() +
-            secondNumber.toString();
-      }
-      if (operation == '/') {
-        res = (firstNumber / secondNumber).toString();
-        history = firstNumber.toString() +
-            operation.toString() +
-            secondNumber.toString();
-      }
-    } else {
-      res = int.parse(textToDisplay + btnVal).toString();
-    }
-
     setState(() {
-      textToDisplay = res;
+      if (btnVal == 'C') {
+        equation = "0";
+      } else if (btnVal == 'AC') {
+        equation = "0";
+        result = "0";
+      } else if (btnVal == '<') {
+        equation = equation.substring(0, equation.length - 1);
+        if (equation == "") {
+          equation = "0";
+        }
+      } else if (btnVal == '+/-') {
+        if (equation[0] != '-') {
+          equation = '-' + equation;
+        } else {
+          equation = equation.substring(1);
+        }
+      } else if (btnVal == '=') {
+        expression = equation;
+        expression = expression.replaceAll('×', '*');
+        try {
+          Parser p = new Parser();
+          Expression exp = p.parse(expression);
+
+          ContextModel cm = ContextModel();
+          result = '${exp.evaluate(EvaluationType.REAL, cm)}';
+          equation = result;
+        } catch (e) {
+          result = 'Error';
+        }
+      } else {
+        if (equation == "0") {
+          equation = btnVal;
+        } else {
+          equation = equation + btnVal;
+        }
+      }
     });
   }
 
@@ -104,13 +81,13 @@ class _CalculatorAppState extends State<CalculatorApp> {
           children: [
             Container(
               child: Padding(
-                padding: EdgeInsets.only(right: 12),
+                padding: EdgeInsets.all(22),
                 child: Text(
-                  history,
+                  equation,
                   style: TextStyle(
-                    color: paletteTransparent,
+                    color: paletteWhite,
                     fontFamily: 'Roboto',
-                    fontSize: 24,
+                    fontSize: 48,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -121,7 +98,7 @@ class _CalculatorAppState extends State<CalculatorApp> {
               child: Padding(
                 padding: EdgeInsets.all(22),
                 child: Text(
-                  textToDisplay,
+                  result,
                   style: TextStyle(
                     color: paletteWhite,
                     fontFamily: 'Roboto',
@@ -190,7 +167,7 @@ class _CalculatorAppState extends State<CalculatorApp> {
                   callback: btnOnClick,
                 ),
                 CalculatorButton(
-                  text: 'X',
+                  text: '×',
                   fillColor: 0xFFFFAB40,
                   textColor: 0xFF000000,
                   textSize: 24,
